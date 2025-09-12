@@ -1,0 +1,61 @@
+# Autor: Manoel Messias - 12 Fevereiro de 2025
+# Código para teste da da odometria atraves do encoder
+#
+
+import lgpio # controle dos pinos
+import serial # comunicação serial
+import time # espera de tempo
+
+DAT_PIN = 4 # pino de controle de comunicação
+RESET_PIN = 18 # pino que reseta o stm32
+
+h = lgpio.gpiochip_open(0) # Abre o chip dos GPIOS, cria uma referência para ele
+lgpio.gpio_claim_output(h, DAT_PIN) # Define o pino como saída
+lgpio.gpio_claim_output(h, RESET_PIN) # Define o pino como saída
+
+lgpio.gpio_write(h, RESET_PIN, 0) # aqui ele bloqueia o stm32
+lgpio.gpio_write(h, DAT_PIN, 1) # dá a ele o valor 1
+time.sleep(0.1) # espera um tempinho para garantir que o raspberry terá reiniciado
+lgpio.gpio_write(h, RESET_PIN, 1) # aqui ele desbloqueia o stm32
+
+stm32 = serial.Serial('/dev/ttyAMA0', 230000, timeout=0.1) # cria a counicação com o stm32
+
+esq = 0x00 # para andar para frente
+direita = 0xFF
+
+data_receveid = [
+    [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], # 0 - linha
+    [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], # mt1
+    [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]  # mt2
+]
+
+def updateData():
+    send = [0x00, 0x00, esq, 0x00, direita, 0x00, 0x00, 0x00, 0x00] # este é o dado a ser enviado(line d0-d7)
+    stm32.write(send) # envia o dado
+    time.sleep(0.001) # espera para garantir que os dados foram escritos
+    lgpio.gpio_write(h, DAT_PIN, 0) # diz que enviou um dado
+    time.sleep(0.001) # espera ele ler (50us para cada byte + espera do loop 0.1ms = 0.5ms)
+    lgpio.gpio_write(h, DAT_PIN, 1) # diz que quer ler um dado
+    #espera a resposta
+    while stm32.in_waiting<8: 
+        pass # espera existir uma resposta (pelo menos 9 bytes - line d0-d7)
+    line = int.from_bytes(stm32.read(), "big") # a linha
+    data = stm32.read(8) # os dados
+    data_receveid[line] = list(data) #repassa o dado recebido
+
+def stop_stm32():
+    lgpio.gpio_write(h, RESET_PIN, 0) # aqui ele bloqueia o stm32
+    lgpio.gpio_write(h, DAT_PIN, 1) # para finalizar com o valor 1
+
+try:
+    while True:
+        updateData()
+        vd_msb = data_receveid[0][0]
+        vd_lsb = data_receveid[0][1]
+        vd = (vd_msb << 8) | (vd_lsb)
+        v2_msb = data_receveid[0][2]
+        v2_lsb = data_receveid[0][3]
+        v2 = (v2_msb << 8) | (v2_lsb)
+        print(vd, vd_msb, vd_lsb)
+except KeyboardInterrupt:
+    stop_stm32()

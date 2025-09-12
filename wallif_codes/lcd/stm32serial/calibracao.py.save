@@ -1,0 +1,101 @@
+# Autor: Manoel Messias - 06 Fevereiro de 2025
+# Código para verificar a resolução do motor
+#
+
+import lgpio # controle dos pinos
+import serial # comunicação serial
+import time # espera de tempo
+import I2C_LCD_driver # para exibir no lcd
+
+lcdi2c = I2C_LCD_driver.lcd() # instacia da classe que se comunica com o lcd
+
+DAT_PIN = 4 # pino de controle de comunicação
+RESET_PIN = 18 # pino que reseta o stm32
+
+h = lgpio.gpiochip_open(0) # Abre o chip dos GPIOS, cria uma referência para ele
+lgpio.gpio_claim_output(h, DAT_PIN) # Define o pino como saída
+lgpio.gpio_claim_output(h, RESET_PIN) # Define o pino como saída
+
+lgpio.gpio_write(h, RESET_PIN, 0) # aqui ele bloqueia o stm32
+lgpio.gpio_write(h, DAT_PIN, 1) # dá a ele o valor 1
+time.sleep(0.1) # espera um tempinho para garantir que o raspberry terá reiniciado
+lgpio.gpio_write(h, RESET_PIN, 1) # aqui ele desbloqueia o stm32
+
+stm32 = serial.Serial('/dev/ttyAMA0', 230000, timeout=0.1) # cria a counicação com o stm32
+
+pwm1 = 0x00 # para andar para frente
+pwm2 = 0x00
+max1 = 0xFF
+max2 = 0xFF
+contagem = 0x00 #diz se deve ou não contar o encoder
+borda = 0x01 # este serve para que o sensor só mude a contagem uma vez
+data_receveid = [
+    [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], # 0 - linha
+    [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], # mt1
+    [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]  # mt2
+]
+
+def updateData():
+    send = [0x00, 0x00, pwm, 0x00, pwm, contagem, 0x00, 0x00, 0x00] # este é o dado a ser enviado(line d0-d7)
+    stm32.write(send) # envia o dado
+    time.sleep(0.001) # espera para garantir que os dados foram escritos
+    lgpio.gpio_write(h, DAT_PIN, 0) # diz que enviou um dado
+    time.sleep(0.001) # espera ele ler (50us para cada byte + espera do loop 0.1ms = 0.5ms)
+    lgpio.gpio_write(h, DAT_PIN, 1) # diz que quer ler um dado
+    #espera a resposta
+    while stm32.in_waiting<8: 
+        pass # espera existir uma resposta (pelo menos 9 bytes - line d0-d7)
+    line = int.from_bytes(stm32.read(), "big") # a linha
+    data = stm32.read(8) # os dados
+    data_receveid[line] = list(data) #repassa o dado recebido
+
+def stop_stm32():
+    lgpio.gpio_write(h, RESET_PIN, 0) # aqui ele bloqueia o stm32
+    lgpio.gpio_write(h, DAT_PIN, 1) # para finalizar com o valor 1
+
+try:
+    # acelera até atingir a velocidade maxima
+    while pwm<0xAF:
+        pwm = pwm+1
+        if pwm>0xAF: pwm = 0xAF
+        updateData()
+        # caso já detect a linha, pule e atinja a maxima velocidade instantaneamente
+        if(data_receveid[0][0] == 1):
+            pwm = 255
+            break
+        time.sleep(0.002) # espera para causar uma ideia de aceleração
+    while True:
+        if(not(data_receveid[0][0] == borda)): # houve uma mudança no valor do sensor
+            borda = data_receveid[0][0]
+            if(borda==0x01): #acabou de detectar uma linha
+                # ativa ou desativa a contagem
+                if contagem==0x00:
+                    # ativa  acontagem
+                    contagem=0x01
+                else:
+                    # desativa a contagem e pula fora
+                    contagem=0x00 
+                    break
+
+        updateData()
+    
+    #  quando chegar aqui ele deve parar
+    while pwm>0x00:
+        pwm = pwm-1
+        updateData()
+        time.sleep(0.002) # espera para causar uma ideia de desaceleração
+    stop_stm32()
+
+    # reconstitui o dado recebido
+    encoder_mt1 = 0x0000000000000000
+    encoder_mt2 = 0x0000000000000000
+    for i in range(8):
+        encoder_mt1 |= (data_receveid[1][7-i] << (i*8))
+        encoder_mt2 |= (data_receveid[2][7-i] << (i*8))
+        
+    # exibe no lcd
+    lcdi2c.lcd_display_string(str(encoder_mt1), 1,0)
+    lcdi2c.lcd_display_string(str(encoder_mt2), 2,0)
+
+except KeyboardInterrupt:
+    stop_stm32()
