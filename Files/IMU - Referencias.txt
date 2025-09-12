@@ -1,0 +1,11 @@
+IMU MPU6050 (Acelerometro e giroscópio)
+
+https://www.youtube.com/watch?v=E85Vzb5B_-k
+programação: https://www.youtube.com/watch?v=L5QIFnurucU
+
+comprar: https://copeleletronica.com.br/p-modulo-sensor-aceleromerto-giroscopio-imu-mpu6050-12602
+
+IMU mpu9250 (acelerômetro, giroscópio e magnetrometro)
+
+comprar: https://www.robocore.net/sensor-robo/acelerometro-giroscopio-magnetometro-mpu9250?srsltid=AfmBOoosZhcO-sItTIdxszQzerjCPcIE5Hx8-WDkw_ClZYHbNoyNukB1
+Tutorial (Espanhol) : https://www.youtube.com/watch?v=uRagSlpypAQ&list=PLbF_bJMTTPGCbM4tAirHoVPSjikRjN9xW&index=6

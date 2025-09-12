@@ -1,0 +1,9 @@
+criação de serviços
+https://sempreupdate.com.br/linux/tutoriais/configurando-ou-criando-um-servico-no-ubuntu/
+https://marquesfernandes.com/desenvolvimento/criando-um-servico-linux-com-systemd/
+
+Execultar comando em um código python
+https://hub.asimov.academy/tutorial/como-executar-um-comando-do-sistema-com-python/#:~:text=A%20maneira%20recomendada%20de%20executar,obter%20seus%20c%C3%B3digos%20de%20retorno.
+
+local do execultavel python: /usr/bin/python3
+https://groups.google.com/g/python-brasil/c/B1XAvB1HiR0
