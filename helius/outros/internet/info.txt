@@ -1,0 +1,3 @@
+execulte o gerenciador com sudo (sudo python3 gerenciador.py)
+instale o iwlist (sudo apt install wireless-tools)
+instale o udhcpc (sudo apt install udhcpc)
