@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciador de labirinto</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="config">
+        <fieldset>
+            <legend>Dimensões:</legend>
+            <div>
+                <label for="width">Largura:</label>
+                    <input type="number" min="0" name="width" id="width" value="30"><br>
+                <label for="height">Altura:</label>
+                    <input type="number" min="0" name="height" id="height" value="30">
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Inicio:
+            <button onclick="operationState(1,this)">Mudar</button></legend>
+            <div>
+                <label for="iniciox">x:</label>
+                    <input type="number" min="0" name="iniciox" id="iniciox" value="1"><br>
+                <label for="inicioy">y:</label>
+                    <input type="number" min="0" name="inicioy" id="inicioy" value="1">
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Fim:
+                <button onclick="operationState(2,this)">Mudar</button>
+            </legend>
+            <div>
+                <label for="fimx">x:</label>
+                    <input type="number" min="0" name="fimx" id="fimx" value="28"><br>
+                <label for="fimy">y:</label>
+                    <input type="number" min="0" name="fimy" id="fimy" value="28">
+            </div>
+        </fieldset>
+        <div class="dataInfo">
+            <label for="fileName">Arquivo:</label>
+            <input type="text" id="fileName" name="fileName" value="mapa">
+        </div>
+        <div class="dataInfo">
+            <label for="varname">Variavel:</label>
+            <input type="text" id="varname" name="varname" value="mapa">
+        </div>
+        <button class="file" onclick="save()">Download File Map</button>
+        <button class="file" onclick="openFile()">Load File Map</button>
+    </div>
+    <div class="center">
+        <canvas width="300" height="300"></canvas>
+    </div>
+    <div class="ferramenta">
+        <div class="type">
+            <div class="lapis selected"  onclick="setFerramenta(1,this)"></div>
+            <div class="borracha" onclick="setFerramenta(0,this)"></div>
+        </div>
+        <div class="items">
+            <div class="ponto selected" onclick="operationState(0, this)"></div>
+            <div class="vertical" onclick="operationState(3, this)"></div>
+            <div class="horizontal" onclick="operationState(4, this)"></div>
+            <div class="quadrado" onclick="operationState(5, this)"></div>
+        </div>
+       
+    </div>
+    <script src="scripts/geral.js"></script>
+    <script src="scripts/eventos.js"></script>
+    <script src="scripts/update.js"></script>
+    <script src="scripts/save.js"></script>
+    <script src="scripts/open.js"></script>
+</body>
+</html>
